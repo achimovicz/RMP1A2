@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spritesheet-Animation mit Rasterfilter</title>
+    <style>
+        #imageCanvas {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <input type="range" id="rasterSizeSlider" min="1" max="20" value="5" onchange="updateRasterSize()">
+    <span id="rasterSizeValue">Rastergröße: 5</span>
+
+    <br>
+
+    <canvas id="imageCanvas"></canvas>
+
+    <script>
+        var rasterSize = 5;
+        var canvas = document.getElementById('imageCanvas');
+        var ctx = canvas.getContext('2d');
+        var rasterSizeSlider = document.getElementById('rasterSizeSlider');
+        var rasterSizeValue = document.getElementById('rasterSizeValue');
+        var numFrames = 10;
+
+        var img = new Image();
+        img.onload = onLoad;
+        img.src = './A2.PNG';
+
+        function onLoad() {
+            var spriteWidth = img.width / numFrames;
+            var spriteHeight = img.height;
+
+            canvas.width = spriteWidth;
+            canvas.height = spriteHeight;
+
+            var currentFrame = 0;
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, currentFrame * spriteWidth, 0, spriteWidth, spriteHeight, 0, 0, spriteWidth, spriteHeight);
+
+                currentFrame = (currentFrame + 1) % numFrames;
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        function applyRasterFilter() {
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            for (var x = 0; x < imgData.width; x++) {
+                for (var y = 0; y < imgData.height; y++) {
+
+                    var rasterX = ((x / rasterSize) | 0) * rasterSize;
+                    var rasterY = ((y / rasterSize) | 0) * rasterSize;
+
+                    var rasterValIndex = (rasterX + rasterY * imgData.width) * 4;
+
+                    r = imgData.data[rasterValIndex];
+                    g = imgData.data[rasterValIndex + 1];
+                    b = imgData.data[rasterValIndex + 2];
+                    a = imgData.data[rasterValIndex + 3];
+
+                    //Pixel setzen in x, y
+                    var newIndex = (x + y * imgData.width) * 4;
+                    imgData.data[newIndex] = r;
+                    imgData.data[newIndex + 1] = g;
+                    imgData.data[newIndex + 2] = b;
+                    imgData.data[newIndex + 3] = a;
+
+                    console.log('Die applyRasterFilter-Funktion wird aufgerufen.');
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        function updateRasterSize() {
+            rasterSize = parseInt(rasterSizeSlider.value, 10);
+            rasterSizeValue.textContent = 'Rastergröße: ' + rasterSize;
+            applyRasterFilter();
+            console.log('Die Funktion updateRasterSize wird aufgerufen.');
+        }
+    </script>
+</body>
+</html>
